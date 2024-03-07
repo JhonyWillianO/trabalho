@@ -1,0 +1,206 @@
+package main
+
+import (
+	"bufio"
+	"encoding/json"
+	"fmt"
+	"os"
+	"strings"
+)
+
+type Person struct {
+	Name    string `json:"name"`
+	Address string `json:"address"`
+	Age     string `json:"age"`
+	Email   string `json:"email"`
+	Phone   string `json:"phone"`
+}
+
+var People []Person
+
+func main() {
+	People = loadPeople()
+
+	for {
+		showMenu()
+		reader := bufio.NewReader(os.Stdin)
+		cmdString, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		cmdString = strings.TrimSuffix(cmdString, "\n")
+		cmdString = strings.TrimSpace(cmdString)
+
+		switch cmdString {
+		case "1":
+			fmt.Println("Enter Person Details")
+			addUser()
+		case "2":
+			fmt.Println("Get People")
+			getUser()
+		case "3":
+			fmt.Println("Delete Person")
+			delUser()
+		case "4":
+			fmt.Println("Update Person")
+			editUser()
+		case "5":
+			fmt.Println("Exiting...")
+			os.Exit(0)
+		default:
+			fmt.Println("Invalid Option")
+		}
+	}
+}
+
+func showMenu() {
+	fmt.Println("1. Add Person")
+	fmt.Println("2. Get People")
+	fmt.Println("3. Delete Person")
+	fmt.Println("4. Update Person")
+	fmt.Println("5. Exit")
+}
+
+func addUser() {
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Println("Enter Name: ")
+	name, _ := reader.ReadString('\n')
+
+	fmt.Println("Enter Address: ")
+	address, _ := reader.ReadString('\n')
+
+	fmt.Println("Enter Age: ")
+	age, _ := reader.ReadString('\n')
+
+	fmt.Println("Enter Email: ")
+	email, _ := reader.ReadString('\n')
+
+	fmt.Println("Enter Phone: ")
+	phone, _ := reader.ReadString('\n')
+
+	person := Person{
+		Name:    strings.TrimSpace(name),
+		Address: strings.TrimSpace(address),
+		Age:     strings.TrimSpace(age),
+		Email:   strings.TrimSpace(email),
+		Phone:   strings.TrimSpace(phone),
+	}
+
+	People = append(People, person)
+	saveUsers()
+}
+
+func getUser() {
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Println("Enter Name to search: ")
+	name, _ := reader.ReadString('\n')
+	name = strings.TrimSpace(name)
+
+	for _, p := range People {
+		if p.Name == name {
+			fmt.Println("Name:", p.Name)
+			fmt.Println("Address:", p.Address)
+			fmt.Println("Age:", p.Age)
+			fmt.Println("Email:", p.Email)
+			fmt.Println("Phone:", p.Phone)
+			return
+		}
+	}
+
+	fmt.Println("User not found")
+}
+
+func editUser() {
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Println("Enter Name of the user to edit: ")
+	name, _ := reader.ReadString('\n')
+	name = strings.TrimSpace(name)
+
+	found := false
+	for i, p := range People {
+		if p.Name == name {
+			found = true
+
+			fmt.Println("Enter new Name (press enter to keep the same): ")
+			newName, _ := reader.ReadString('\n')
+			newName = strings.TrimSpace(newName)
+
+			fmt.Println("Enter new Address (press enter to keep the same): ")
+			newAddress, _ := reader.ReadString('\n')
+			newAddress = strings.TrimSpace(newAddress)
+
+			fmt.Println("Enter new Age (press enter to keep the same): ")
+			newAge, _ := reader.ReadString('\n')
+			newAge = strings.TrimSpace(newAge)
+
+			fmt.Println("Enter new Email (press enter to keep the same): ")
+			newEmail, _ := reader.ReadString('\n')
+			newEmail = strings.TrimSpace(newEmail)
+
+			fmt.Println("Enter new Phone (press enter to keep the same): ")
+			newPhone, _ := reader.ReadString('\n')
+			newPhone = strings.TrimSpace(newPhone)
+
+			if newName != "" {
+				People[i].Name = newName
+			}
+			if newAddress != "" {
+				People[i].Address = newAddress
+			}
+			if newAge != "" {
+				People[i].Age = newAge
+			}
+			if newEmail != "" {
+				People[i].Email = newEmail
+			}
+			if newPhone != "" {
+				People[i].Phone = newPhone
+			}
+
+			saveUsers()
+			fmt.Println("User updated successfully")
+			break
+		}
+	}
+
+	if !found {
+		fmt.Println("User not found")
+	}
+}
+
+func delUser() {
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Println("Enter Name to delete: ")
+	name, _ := reader.ReadString('\n')
+	name = strings.TrimSpace(name)
+
+	for i, p := range People {
+		if p.Name == name {
+			People = append(People[:i], People[i+1:]...)
+			saveUsers()
+			fmt.Println("User deleted successfully")
+			return
+		}
+	}
+
+	fmt.Println("User not found")
+}
+
+func loadPeople() []Person {
+	file, err := os.ReadFile("people.json")
+	if err != nil {
+		fmt.Println("Error reading file")
+	}
+	_ = json.Unmarshal(file, &People)
+	return People
+}
+
+func saveUsers() {
+	file, _ := json.MarshalIndent(People, "", " ")
+	_ = os.WriteFile("people.json", file, 0644)
+}
